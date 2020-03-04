@@ -1,78 +1,50 @@
 import React from 'react'
 import * as BooksAPI from './BooksAPI'
 import './App.css'
-import { Route, Link } from 'react-router-dom';
+import { Route } from 'react-router-dom';
 
-import BookList from './BookList';
 import Search from './Search';
+import MainPage from './MainPage';
 
 class BooksApp extends React.Component {
   state = {
-    books: []
+    books: [],
+    loading: false
   }
 
   componentDidMount = () => {
-    this.fetchAllBooks()
+    this.fetchAllBooks();
   }
 
   fetchAllBooks = () => {
     BooksAPI.getAll()
       .then(books => this.setState({ books }))
-  }
-
-  filterBooks = (shelfName) => {
-    return this.state.books.filter(book => book.shelf === shelfName)
+      .then(() => this.setState({ loading: false }))
   }
 
   // move book to a different shelf
   onShelfChange = async (book, shelfName) => {
+    this.setState({ loading: true });
     await BooksAPI.update(book, shelfName)
 
-    this.fetchAllBooks();
+    this.fetchAllBooks()
   }
 
   render() {
     return (
-      <div className="app">
+      <div className={`app ${this.state.loading && 'dimmed'}`}>
         <Route path="/search">
           <Search
             userBooks={this.state.books}
             onShelfChange={this.onShelfChange}
           />
         </Route>
-
         <Route exact path="/">
-          <div className="list-books">
-            <div className="list-books-title">
-              <h1>MyReads</h1>
-            </div>
-            <div className="list-books-content">
-              <div>
-                <BookList
-                  name="Currently Reading"
-                  books={this.filterBooks('currentlyReading')}
-                  onShelfChange={this.onShelfChange}
-                />
-                <BookList name="Want to Read"
-                  books={this.filterBooks('wantToRead')}
-                  onShelfChange={this.onShelfChange} />
-                <BookList
-                  name="Read"
-                  books={this.filterBooks('read')}
-                  onShelfChange={this.onShelfChange}
-                />
-              </div>
-            </div>
-            <div className="open-search">
-              <Link to="/search">
-                <button>Add a book</button>
-              </Link>
-            </div>
-          </div>
+          <MainPage books={this.state.books} onShelfChange={this.onShelfChange} />
         </Route>
       </div>
     )
   }
 }
 
-export default BooksApp
+export default BooksApp;

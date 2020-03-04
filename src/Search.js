@@ -1,22 +1,24 @@
 import React from 'react';
-import * as BooksAPI from './BooksAPI'
+import * as BooksAPI from './BooksAPI';
+import PropTypes from 'prop-types';
 
-import { Link } from 'react-router-dom';
 import BookList from './BookList';
+import SearchBar from './SearchBar';
 
-export default class Search extends React.Component {
+class Search extends React.Component {
     state = {
         searchValue: '',
         books: [],
         errorMessage: ''
     }
 
+    // update search query
     handleChange = (searchValue) => {
-        this.setState(() => ({ searchValue }), this.filterBooks)
+        this.setState(() => ({ searchValue }), this.fetchBooks)
     }
 
-    filterBooks = async () => {
-        const searchValue = this.state.searchValue.toLowerCase();
+    fetchBooks = async () => {
+        const searchValue = this.state.searchValue.trim().toLowerCase();
         if (!searchValue) {
             return this.setState({ books: [], errorMessage: '' });
         }
@@ -25,15 +27,16 @@ export default class Search extends React.Component {
             const books = await BooksAPI.search(searchValue)
 
             if (books.error) {
-                this.setState({ errorMessage: 'Your search did not match any books.', books: [] })
+                this.setState({ books: [], errorMessage: 'Your search did not match any books.' })
             } else {
-                this.setState({ books });
+                this.setState({ books, errorMessage: '' });
             }
         } catch (err) {
             console.log(err);
         }
     }
 
+    // checks if books that match the query are also added by the user to their lists
     getBooksWithShelves = () => {
         return this.state.books.map((book) => {
             const bookInParentState = this.props.userBooks.find((userBook) => userBook.id === book.id)
@@ -43,44 +46,46 @@ export default class Search extends React.Component {
         })
     }
 
+    displaySuggestions = () => {
+        const suggestions = ['horror', 'react', 'artificial intelligence', 'Rowling'];
+
+        return suggestions.map(suggestion => (
+            <li
+                onClick={() => this.handleChange(suggestion)}
+                key={suggestion}
+                className="suggestion"
+            >
+                {suggestion}
+            </li>
+        ))
+    }
+
     render() {
         const booksWithShelf = this.getBooksWithShelves();
 
         return (
             <div className="search-books">
-                <div className="search-books-bar">
-                    <Link to="/">
-                        <button className="close-search">Close</button>
-                    </Link>
-
-                    <div className="search-books-input-wrapper">
-                        {/*
-                    NOTES: The search from BooksAPI is limited to a particular set of search terms.
-                    You can find these search terms here:
-                    https://github.com/udacity/reactnd-project-myreads-starter/blob/master/SEARCH_TERMS.md
-    
-                    However, remember that the BooksAPI.search method DOES search by title or author. So, don't worry if
-                    you don't find a specific author or title. Every search is limited by search terms.
-                        */}
-                        <input
-                            type="text"
-                            placeholder="Search by title or author"
-                            value={this.state.searchValue}
-                            onChange={(e) => this.handleChange(e.target.value)}
-                        />
-                    </div>
-                </div>
+                <SearchBar
+                    query={this.state.searchValue}
+                    handleChange={this.handleChange}
+                />
                 <div className="search-books-results">
-                    {this.state.errorMessage}
-                    <ol className="books-grid">
-                        <BookList
-                            books={booksWithShelf}
-                            name="Search"
-                            onShelfChange={this.props.onShelfChange}
-                        />
-                    </ol>
+                    <ul className="search-suggestions">Try: <span style={{ color: '#999' }}>{this.displaySuggestions()}</span></ul>
+                    <BookList
+                        books={booksWithShelf}
+                        name="Search"
+                        onShelfChange={this.props.onShelfChange}
+                    />
+                    <div style={{ 'textAlign': 'center' }}>{this.state.errorMessage}</div>
                 </div>
             </div>
         )
     }
 }
+
+Search.propTypes = {
+    userBooks: PropTypes.arrayOf(PropTypes.object),
+    onShelfChange: PropTypes.func.isRequired
+}
+
+export default Search;

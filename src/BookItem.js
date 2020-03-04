@@ -1,6 +1,7 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
-export default class BookItem extends React.Component {
+class BookItem extends React.Component {
     onChangeSelect = (newShelf) => {
         this.props.onShelfChange(this.props.book, newShelf);
     }
@@ -13,9 +14,9 @@ export default class BookItem extends React.Component {
             <li>
                 <div className="book">
                     <div className="book-top">
-                        <div className="book-cover" style={{ width: 128, height: 193, backgroundImage: `url(${hasImage})` }}></div>
+                        <div className="book-cover" style={{ backgroundImage: `url(${hasImage})` }}></div>
                         <div className="book-shelf-changer">
-                            <select value={this.props.book.shelf || 'none'} onChange={(e) => this.onChangeSelect(e.target.value)}>
+                            <select value={book.shelf || 'none'} onChange={(e) => this.onChangeSelect(e.target.value)}>
                                 <option value="move" disabled>Move to...</option>
                                 <option value="currentlyReading">Currently Reading</option>
                                 <option value="wantToRead">Want to Read</option>
@@ -30,5 +31,11 @@ export default class BookItem extends React.Component {
             </li>
         )
     }
-
 }
+
+BookItem.propTypes = {
+    book: PropTypes.object.isRequired,
+    onShelfChange: PropTypes.func.isRequired
+}
+
+export default BookItem;
